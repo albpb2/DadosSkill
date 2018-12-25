@@ -2,6 +2,7 @@ using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Amazon.Lambda.Core;
+using Dados.Exceptions;
 using System;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -15,10 +16,12 @@ namespace Dados
         private const string NumberOfSidesSlotName = "NumberOfSides";
 
         private IDiceRoller _diceRoller;
+        private IIntegerNumberParser _integerNumberParser;
 
         public Function()
         {
             _diceRoller = new DiceRoller(new DiceFactory());
+            _integerNumberParser = new IntegerNumberParser();
         }
 
         /// <summary>
@@ -34,7 +37,6 @@ namespace Dados
             response.Response.ShouldEndSession = false;
             IOutputSpeech innerResponse = null;
             var log = context.Logger;
-            var random = new Random();
 
             if (input.GetRequestType() == typeof(LaunchRequest))
             {
@@ -66,14 +68,7 @@ namespace Dados
                         break;
                     case "ThrowDiceIntent":
                         log.LogLine($"ThrowDiceIntent sent");
-
-                        var numberOfDices = GetNumberOfDices(intentRequest);
-                        var numberOfSides = GetNumberOfSides(intentRequest);
-
-                        var totalPoints = _diceRoller.RollDices(numberOfDices, numberOfSides);
-
-                        innerResponse = new PlainTextOutputSpeech();
-                        (innerResponse as PlainTextOutputSpeech).Text = totalPoints.ToString();
+                        innerResponse = ProcessDiceRoll(intentRequest, log);
                         break;
                     default:
                         log.LogLine($"Unknown intent: " + intentRequest.Intent.Name);
@@ -85,6 +80,33 @@ namespace Dados
             response.Response.OutputSpeech = innerResponse;
             response.Version = "1.0";
             return response;
+        }
+
+        private PlainTextOutputSpeech ProcessDiceRoll(IntentRequest intentRequest, ILambdaLogger logger)
+        {
+            var innerResponse = new PlainTextOutputSpeech();
+
+            try
+            {
+                var numberOfDices = GetNumberOfDices(intentRequest);
+                var numberOfSides = GetNumberOfSides(intentRequest);
+
+                var totalPoints = _diceRoller.RollDices(numberOfDices, numberOfSides);
+
+                (innerResponse as PlainTextOutputSpeech).Text = totalPoints.ToString();
+            }
+            catch (IntegerParseException ex)
+            {
+                logger.Log(ex.Message);
+                (innerResponse as PlainTextOutputSpeech).Text = "Por favor, indica números enteros";
+            }
+            catch (Exception ex)
+            {
+                logger.Log(ex.Message);
+                (innerResponse as PlainTextOutputSpeech).Text = "Se ha producido un error. Por favor, inténtalo de nuevo";
+            }
+
+            return innerResponse;
         }
 
         private int GetNumberOfDices(IntentRequest intentRequest)
