@@ -4,7 +4,7 @@ namespace Dados
 {
     public class Dice : IDice
     {
-        private const int DefaultSides = 6;
+        public const int DefaultSides = 6;
         private const int MinValue = 1;
 
         private readonly int _sides;

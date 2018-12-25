@@ -12,6 +12,7 @@ namespace Dados
     public class Function
     {
         private const string NumberOfDicesSlotName = "NumberOfDices";
+        private const string NumberOfSidesSlotName = "NumberOfSides";
 
         private IDiceRoller _diceRoller;
 
@@ -64,11 +65,12 @@ namespace Dados
                         (innerResponse as PlainTextOutputSpeech).Text = "Puedes decir algo como 'Alexa, tira dos dados de diez caras";
                         break;
                     case "ThrowDiceIntent":
-                        log.LogLine($"ThrowDiceIntent sent: throw a dice");
+                        log.LogLine($"ThrowDiceIntent sent");
 
-                        var numberOfDices = int.Parse(intentRequest.Intent.Slots[NumberOfDicesSlotName].Value);
+                        var numberOfDices = GetNumberOfDices(intentRequest);
+                        var numberOfSides = GetNumberOfSides(intentRequest);
 
-                        var totalPoints = _diceRoller.RollDices(numberOfDices, 6);
+                        var totalPoints = _diceRoller.RollDices(numberOfDices, numberOfSides);
 
                         innerResponse = new PlainTextOutputSpeech();
                         (innerResponse as PlainTextOutputSpeech).Text = totalPoints.ToString();
@@ -83,6 +85,26 @@ namespace Dados
             response.Response.OutputSpeech = innerResponse;
             response.Version = "1.0";
             return response;
+        }
+
+        private int GetNumberOfDices(IntentRequest intentRequest)
+        {
+            return int.Parse(intentRequest.Intent.Slots[NumberOfDicesSlotName].Value);
+        }
+
+        private int GetNumberOfSides(IntentRequest intentRequest)
+        {
+            if (intentRequest.Intent.Slots.ContainsKey(NumberOfSidesSlotName) 
+                && intentRequest.Intent.Slots[NumberOfSidesSlotName].Value != null)
+            {
+                var numberOfSidesText = intentRequest.Intent.Slots[NumberOfSidesSlotName].Value;
+                if (!string.IsNullOrEmpty(numberOfSidesText))
+                {
+                    return int.Parse(numberOfSidesText);
+                }
+            }
+
+            return Dice.DefaultSides;
         }
     }
 }
