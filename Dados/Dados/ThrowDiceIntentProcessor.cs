@@ -39,7 +39,9 @@ namespace Dados
             try
             {
                 var numberOfDices = GetNumberOfDices(intentRequest);
+                DicesAmountValidator.Validate(numberOfDices);
                 var numberOfSides = GetNumberOfSides(intentRequest);
+                DiceSidesValidator.Validate(numberOfSides);
 
                 var totalPoints = _diceRoller.RollDices(numberOfDices, numberOfSides);
 
