@@ -11,6 +11,15 @@ namespace Dados
 {
     public class Function
     {
+        private const string NumberOfDicesSlotName = "NumberOfDices";
+
+        private IDiceRoller _diceRoller;
+
+        public Function()
+        {
+            _diceRoller = new DiceRoller(new DiceFactory());
+        }
+
         /// <summary>
         /// A simple function that takes a string and does a ToUpper
         /// </summary>
@@ -56,8 +65,13 @@ namespace Dados
                         break;
                     case "ThrowDiceIntent":
                         log.LogLine($"ThrowDiceIntent sent: throw a dice");
+
+                        var numberOfDices = int.Parse(intentRequest.Intent.Slots[NumberOfDicesSlotName].Value);
+
+                        var totalPoints = _diceRoller.RollDices(numberOfDices, 6);
+
                         innerResponse = new PlainTextOutputSpeech();
-                        (innerResponse as PlainTextOutputSpeech).Text = random.Next(1, 6).ToString();
+                        (innerResponse as PlainTextOutputSpeech).Text = totalPoints.ToString();
                         break;
                     default:
                         log.LogLine($"Unknown intent: " + intentRequest.Intent.Name);
