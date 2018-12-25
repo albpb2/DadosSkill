@@ -49,7 +49,7 @@ namespace Dados
 
         private int GetNumberOfDices(IntentRequest intentRequest)
         {
-            return int.Parse(intentRequest.Intent.Slots[NumberOfDicesSlotName].Value);
+            return _integerNumberParser.Parse(intentRequest.Intent.Slots[NumberOfDicesSlotName].Value);
         }
 
         private int GetNumberOfSides(IntentRequest intentRequest)
@@ -60,7 +60,7 @@ namespace Dados
                 var numberOfSidesText = intentRequest.Intent.Slots[NumberOfSidesSlotName].Value;
                 if (!string.IsNullOrEmpty(numberOfSidesText))
                 {
-                    return int.Parse(numberOfSidesText);
+                    return _integerNumberParser.Parse(numberOfSidesText);
                 }
             }
 
