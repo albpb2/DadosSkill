@@ -2,8 +2,6 @@ using Alexa.NET.Request;
 using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Amazon.Lambda.Core;
-using Dados.Exceptions;
-using System;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -12,16 +10,11 @@ namespace Dados
 {
     public class Function
     {
-        private const string NumberOfDicesSlotName = "NumberOfDices";
-        private const string NumberOfSidesSlotName = "NumberOfSides";
-
-        private IDiceRoller _diceRoller;
-        private IIntegerNumberParser _integerNumberParser;
+        private readonly ThrowDiceIntentProcessor _throwDiceIntentProcessor;
 
         public Function()
         {
-            _diceRoller = new DiceRoller(new DiceFactory());
-            _integerNumberParser = new IntegerNumberParser();
+            _throwDiceIntentProcessor = new ThrowDiceIntentProcessor();
         }
 
         /// <summary>
@@ -68,7 +61,7 @@ namespace Dados
                         break;
                     case "ThrowDiceIntent":
                         log.LogLine($"ThrowDiceIntent sent");
-                        innerResponse = ProcessDiceRoll(intentRequest, log);
+                        innerResponse = _throwDiceIntentProcessor.ProcessIntent(intentRequest, log);
                         break;
                     default:
                         log.LogLine($"Unknown intent: " + intentRequest.Intent.Name);
@@ -80,53 +73,6 @@ namespace Dados
             response.Response.OutputSpeech = innerResponse;
             response.Version = "1.0";
             return response;
-        }
-
-        private PlainTextOutputSpeech ProcessDiceRoll(IntentRequest intentRequest, ILambdaLogger logger)
-        {
-            var innerResponse = new PlainTextOutputSpeech();
-
-            try
-            {
-                var numberOfDices = GetNumberOfDices(intentRequest);
-                var numberOfSides = GetNumberOfSides(intentRequest);
-
-                var totalPoints = _diceRoller.RollDices(numberOfDices, numberOfSides);
-
-                (innerResponse as PlainTextOutputSpeech).Text = totalPoints.ToString();
-            }
-            catch (IntegerParseException ex)
-            {
-                logger.Log(ex.Message);
-                (innerResponse as PlainTextOutputSpeech).Text = "Por favor, indica números enteros";
-            }
-            catch (Exception ex)
-            {
-                logger.Log(ex.Message);
-                (innerResponse as PlainTextOutputSpeech).Text = "Se ha producido un error. Por favor, inténtalo de nuevo";
-            }
-
-            return innerResponse;
-        }
-
-        private int GetNumberOfDices(IntentRequest intentRequest)
-        {
-            return int.Parse(intentRequest.Intent.Slots[NumberOfDicesSlotName].Value);
-        }
-
-        private int GetNumberOfSides(IntentRequest intentRequest)
-        {
-            if (intentRequest.Intent.Slots.ContainsKey(NumberOfSidesSlotName) 
-                && intentRequest.Intent.Slots[NumberOfSidesSlotName].Value != null)
-            {
-                var numberOfSidesText = intentRequest.Intent.Slots[NumberOfSidesSlotName].Value;
-                if (!string.IsNullOrEmpty(numberOfSidesText))
-                {
-                    return int.Parse(numberOfSidesText);
-                }
-            }
-
-            return Dice.DefaultSides;
         }
     }
 }
