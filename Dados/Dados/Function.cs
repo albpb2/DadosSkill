@@ -42,6 +42,9 @@ namespace Dados
                 var intentRequest = (IntentRequest)input.Request;
                 switch (intentRequest.Intent.Name)
                 {
+                    case "ThrowDiceIntent":
+                        log.LogLine($"ThrowDiceIntent sent");
+                        return _throwDiceIntentProcessor.ProcessIntent(intentRequest, log);
                     case "AMAZON.CancelIntent":
                         log.LogLine($"AMAZON.CancelIntent: send StopMessage");
                         innerResponse = new PlainTextOutputSpeech();
@@ -58,10 +61,6 @@ namespace Dados
                         log.LogLine($"AMAZON.HelpIntent: send HelpMessage");
                         innerResponse = new PlainTextOutputSpeech();
                         (innerResponse as PlainTextOutputSpeech).Text = "Puedes decir algo como 'Alexa, tira dos dados de diez caras";
-                        break;
-                    case "ThrowDiceIntent":
-                        log.LogLine($"ThrowDiceIntent sent");
-                        innerResponse = _throwDiceIntentProcessor.ProcessIntent(intentRequest, log);
                         break;
                     default:
                         log.LogLine($"Unknown intent: " + intentRequest.Intent.Name);

@@ -6,6 +6,6 @@ namespace Dados
 {
     public interface IIntentProcessor
     {
-        IOutputSpeech ProcessIntent(IntentRequest intentRequest, ILambdaLogger logger);
+        SkillResponse ProcessIntent(IntentRequest intentRequest, ILambdaLogger logger);
     }
 }

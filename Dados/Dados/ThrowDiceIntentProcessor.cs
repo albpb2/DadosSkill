@@ -1,8 +1,10 @@
-﻿using Alexa.NET.Request.Type;
+﻿using Alexa.NET;
+using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Amazon.Lambda.Core;
 using Dados.Exceptions;
 using System;
+using System.Collections.Generic;
 
 namespace Dados
 {
@@ -10,6 +12,14 @@ namespace Dados
     {
         private const string NumberOfDicesSlotName = "NumberOfDices";
         private const string NumberOfSidesSlotName = "NumberOfSides";
+        private const string DiceRollAudioUrl = @"https://s3-us-west-2.amazonaws.com/albpb2-alexasounds/Dice/Dice.mp3";
+
+        private readonly List<string> _responseFormats = new List<string>()
+        {
+            "El resultado es un {0}",
+            "{0}",
+            "Has sacado un {0}"
+        };
 
         private IDiceRoller _diceRoller;
         private IIntegerNumberParser _integerNumberParser;
@@ -20,9 +30,11 @@ namespace Dados
             _integerNumberParser = new IntegerNumberParser();
         }
 
-        public IOutputSpeech ProcessIntent(IntentRequest intentRequest, ILambdaLogger logger)
+        public SkillResponse ProcessIntent(IntentRequest intentRequest, ILambdaLogger logger)
         {
-            var putputSpeech = new PlainTextOutputSpeech();
+            SkillResponse response = new SkillResponse();
+            var outputSpeech = new PlainTextOutputSpeech();
+            response.Response = new ResponseBody();
 
             try
             {
@@ -31,20 +43,29 @@ namespace Dados
 
                 var totalPoints = _diceRoller.RollDices(numberOfDices, numberOfSides);
 
-                (putputSpeech as PlainTextOutputSpeech).Text = totalPoints.ToString();
+                var speech = new SsmlOutputSpeech();
+                var speechInnerText = AudioTagCreator.Create(DiceRollAudioUrl) + FormatRollResult(totalPoints.ToString());
+                speech.Ssml = SpeechSsmlGenerator.Generate(speechInnerText);
+
+                response = ResponseBuilder.Tell(speech);
             }
             catch (IntegerParseException ex)
             {
                 logger.Log(ex.Message);
-                (putputSpeech as PlainTextOutputSpeech).Text = "Por favor, indica números enteros";
+                (outputSpeech as PlainTextOutputSpeech).Text = "Por favor, indica números enteros";
+                response.Response.OutputSpeech = outputSpeech;
             }
             catch (Exception ex)
             {
                 logger.Log(ex.Message);
-                (putputSpeech as PlainTextOutputSpeech).Text = "Se ha producido un error. Por favor, inténtalo de nuevo";
+                (outputSpeech as PlainTextOutputSpeech).Text = "Se ha producido un error. Por favor, inténtalo de nuevo";
+                response.Response.OutputSpeech = outputSpeech;
             }
 
-            return putputSpeech;
+            response.Response.ShouldEndSession = false;
+            response.Version = "1.0";
+
+            return response;
         }
 
         private int GetNumberOfDices(IntentRequest intentRequest)
@@ -65,6 +86,11 @@ namespace Dados
             }
 
             return Dice.DefaultSides;
+        }
+
+        private string FormatRollResult(string response)
+        {
+            return string.Format(_responseFormats.GetRandomElement(), response);
         }
     }
 }
