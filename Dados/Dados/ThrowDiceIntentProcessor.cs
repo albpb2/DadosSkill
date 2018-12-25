@@ -55,6 +55,18 @@ namespace Dados
                 (outputSpeech as PlainTextOutputSpeech).Text = "Por favor, indica números enteros";
                 response.Response.OutputSpeech = outputSpeech;
             }
+            catch (WrongDiceSidesException ex)
+            {
+                logger.Log(ex.Message);
+                (outputSpeech as PlainTextOutputSpeech).Text = ex.Message;
+                response.Response.OutputSpeech = outputSpeech;
+            }
+            catch (WrongNumberOfDicesException ex)
+            {
+                logger.Log(ex.Message);
+                (outputSpeech as PlainTextOutputSpeech).Text = ex.Message;
+                response.Response.OutputSpeech = outputSpeech;
+            }
             catch (Exception ex)
             {
                 logger.Log(ex.Message);
