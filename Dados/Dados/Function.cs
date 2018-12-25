@@ -20,6 +20,7 @@ namespace Dados
         public SkillResponse FunctionHandler(SkillRequest input, ILambdaContext context)
         {
             SkillResponse response = new SkillResponse();
+            response.Response = new ResponseBody();
             response.Response.ShouldEndSession = false;
             IOutputSpeech innerResponse = null;
             var log = context.Logger;
