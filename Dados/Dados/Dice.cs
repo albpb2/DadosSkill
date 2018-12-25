@@ -22,7 +22,7 @@ namespace Dados
 
         public int Roll()
         {
-            return _random.Next(MinValue, _sides);
+            return _random.Next(MinValue, _sides + 1);
         }
     }
 }
