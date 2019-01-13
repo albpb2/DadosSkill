@@ -10,11 +10,11 @@ namespace Dados
 {
     public class Function
     {
-        private readonly ThrowDiceIntentProcessor _throwDiceIntentProcessor;
+        private readonly RollDiceIntentProcessor _rollDiceIntentProcessor;
 
         public Function()
         {
-            _throwDiceIntentProcessor = new ThrowDiceIntentProcessor();
+            _rollDiceIntentProcessor = new RollDiceIntentProcessor();
         }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace Dados
                 {
                     case "ThrowDiceIntent":
                         log.LogLine($"ThrowDiceIntent sent");
-                        return _throwDiceIntentProcessor.ProcessIntent(intentRequest, log);
+                        return _rollDiceIntentProcessor.ProcessIntent(intentRequest, log);
                     case "AMAZON.CancelIntent":
                         log.LogLine($"AMAZON.CancelIntent: send StopMessage");
                         innerResponse = new PlainTextOutputSpeech();
@@ -61,11 +61,13 @@ namespace Dados
                         log.LogLine($"AMAZON.HelpIntent: send HelpMessage");
                         innerResponse = new PlainTextOutputSpeech();
                         (innerResponse as PlainTextOutputSpeech).Text = "Puedes decir algo como 'Alexa, tira dos dados de diez caras";
+                        response.Response.ShouldEndSession = false;
                         break;
                     default:
                         log.LogLine($"Unknown intent: " + intentRequest.Intent.Name);
                         innerResponse = new PlainTextOutputSpeech();
                         (innerResponse as PlainTextOutputSpeech).Text = "No te he entendido, ¿puedes repetir?";
+                        response.Response.ShouldEndSession = false;
                         break;
                 }
             }

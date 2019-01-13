@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Dados
 {
-    public class ThrowDiceIntentProcessor : IIntentProcessor
+    public class RollDiceIntentProcessor : IIntentProcessor
     {
         private const string NumberOfDicesSlotName = "NumberOfDices";
         private const string NumberOfSidesSlotName = "NumberOfSides";
@@ -24,10 +24,16 @@ namespace Dados
         private IDiceRoller _diceRoller;
         private IIntegerNumberParser _integerNumberParser;
 
-        public ThrowDiceIntentProcessor()
+        public RollDiceIntentProcessor()
         {
             _diceRoller = new DiceRoller(new DiceFactory());
             _integerNumberParser = new IntegerNumberParser();
+        }
+
+        public RollDiceIntentProcessor(IDiceRoller diceRoller, IIntegerNumberParser integerNumberParser)
+        {
+            _diceRoller = diceRoller;
+            _integerNumberParser = integerNumberParser;
         }
 
         public SkillResponse ProcessIntent(IntentRequest intentRequest, ILambdaLogger logger)
@@ -50,33 +56,37 @@ namespace Dados
                 speech.Ssml = SpeechSsmlGenerator.Generate(speechInnerText);
 
                 response = ResponseBuilder.Tell(speech);
+                response.Response.ShouldEndSession = true;
             }
             catch (IntegerParseException ex)
             {
                 logger.Log(ex.Message);
                 (outputSpeech as PlainTextOutputSpeech).Text = "Por favor, indica números enteros";
                 response.Response.OutputSpeech = outputSpeech;
+                response.Response.ShouldEndSession = false;
             }
             catch (WrongDiceSidesException ex)
             {
                 logger.Log(ex.Message);
                 (outputSpeech as PlainTextOutputSpeech).Text = ex.Message;
                 response.Response.OutputSpeech = outputSpeech;
+                response.Response.ShouldEndSession = false;
             }
             catch (WrongNumberOfDicesException ex)
             {
                 logger.Log(ex.Message);
                 (outputSpeech as PlainTextOutputSpeech).Text = ex.Message;
                 response.Response.OutputSpeech = outputSpeech;
+                response.Response.ShouldEndSession = false;
             }
             catch (Exception ex)
             {
                 logger.Log(ex.Message);
                 (outputSpeech as PlainTextOutputSpeech).Text = "Se ha producido un error. Por favor, inténtalo de nuevo";
                 response.Response.OutputSpeech = outputSpeech;
+                response.Response.ShouldEndSession = false;
             }
 
-            response.Response.ShouldEndSession = false;
             response.Version = "1.0";
 
             return response;
